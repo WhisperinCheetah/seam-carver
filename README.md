@@ -14,6 +14,6 @@ make seam
 
 ## Please note
 
-The idea and code are both heavily inspired by (Tsoding)[https://github.com/tsoding/seam-carving]
+The idea and code are both heavily inspired by [Tsoding](https://github.com/tsoding/seam-carving)
 
 This project has not been tested on Windows or Mac, only Ubuntu linux. As far as support goes, you may always send a pull request or add an issue to this repository.
