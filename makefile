@@ -1,6 +1,6 @@
 
 seam:
-	gcc -Wall -Wextra -ggdb -O3 -o main main.c stb_image.o stb_image_write.o -lm
+	gcc -Wall -Wextra -ggdb -O3 -I./raylib/ -o main main.c -L./raylib/ -lraylib -lm
 
 clean:
 	mv main main.old

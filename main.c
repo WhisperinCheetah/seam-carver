@@ -4,6 +4,7 @@
 #include <math.h>
 #include <string.h>
 #include <time.h>
+#include <raylib.h>
 
 #include "stb_image.h"
 #include "stb_image_write.h"
@@ -19,14 +20,14 @@ typedef struct _Magnitude {
   float* pixels;
 } Magnitude;
 
-typedef struct _Image {
+typedef struct _SimpleImage {
   int width;
   int height;
   uint32_t* pixels;
-} Image;
+} SimpleImage;
 
-Image init_image(int width, int height, uint32_t* pixels) {
-  return (Image){
+SimpleImage init_image(int width, int height, uint32_t* pixels) {
+  return (SimpleImage){
     .width = width,
     .height = height,
     .pixels = pixels,
@@ -55,7 +56,7 @@ void check_min_max(const char* name, Magnitude mag, float* min_res, float* max_r
   if (max_res != NULL) *max_res = max;
 }
 
-int dump_image(const char* out_path, Image image) {
+int dump_image(const char* out_path, SimpleImage image) {
   if(!stbi_write_png(out_path, image.width, image.height, 4, image.pixels, image.width*sizeof(*(image.pixels)))) {
     printf("[SEAM-CARVER] Error: failed to save luminance image\n");
     return 1;
@@ -68,7 +69,7 @@ int dump_image(const char* out_path, Image image) {
   return 0;
 }
 
-int dump_mag(const char* out_path, Magnitude mag, Image image, float max) {
+int dump_mag(const char* out_path, Magnitude mag, SimpleImage image, float max) {
   for (int i = 0; i < mag.width * mag.height; ++i) {
     uint32_t value = 255 * (mag.pixels[i] / max);
     image.pixels[i] = 0xFF000000|(value<<(8*2))|(value<<(8*1))|(value<<(8*0));
@@ -85,7 +86,7 @@ float rgb_to_luminance(uint32_t pixel) {
   return 0.299*r + 0.587*g + 0.114*b;
 }
 
-Magnitude calculate_lum_image(Image image) {
+Magnitude calculate_lum_image(SimpleImage image) {
   float* lum = malloc(sizeof(double) * image.width * image.height);
   for (int i = 0; i < image.width * image.height; ++i) {
     lum[i] = rgb_to_luminance(image.pixels[i]);
@@ -164,11 +165,11 @@ int main() {
   if (pixels == NULL) {
     printf("[SEAM-CARVER] Failed to load %s", file_path);
   };
-  Image image = init_image(width, height, pixels);
+  SimpleImage image = init_image(width, height, pixels);
   
   uint32_t* original_pixels = malloc(sizeof(uint32_t) * width * height);
   memcpy(original_pixels, pixels, sizeof(uint32_t) * width * height);
-  Image original_image = init_image(width, height, original_pixels);
+  SimpleImage original_image = init_image(width, height, original_pixels);
   
   if (pixels == NULL) {
     printf("[SEAM-CARVER] Error: couldn't load image");
@@ -178,6 +179,19 @@ int main() {
   printf("[SEAM-CARVER] Loaded image succesfully\n");
   printf("[SEAM-CARVER] width=%d, height=%d\n", width, height);
   printf("\n");
+  
+  InitWindow(800, 600, "Seam carver");
+  SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+  SetTargetFPS(60);
+  int screen_width = 800;
+  while (!WindowShouldClose()) {
+    int new_screen_width = GetScreenWidth();
+    if (screen_width != new_screen_width) {
+      
+    }
+  }
+
+  
 
   for (int i = 0; i < 350; ++i) { 
     printf("Iteration: %d\n", i);
