@@ -157,71 +157,71 @@ Magnitude calculate_dp_image(Magnitude grad) {
 int main() {
   srand(time(NULL));
   
-  //  const char* file_path = "images/Broadway_tower_edit.jpg";
-  const char* file_path = "images/Lena_512.png";
+  //const char* file_path = "Broadway_tower_edit.png";
+  //const char* file_path = "images/Lena_512.png";
+  const char* file_path = "images/river.png";
   
   int width, height;
   uint32_t* pixels = (uint32_t*)stbi_load(file_path, &width, &height, NULL, 4);
   if (pixels == NULL) {
-    printf("[SEAM-CARVER] Failed to load %s", file_path);
-  };
+    printf("[SEAM-CARVER] Error: couldn't load image");
+    return 1;
+  }
   SimpleImage image = init_image(width, height, pixels);
   
   uint32_t* original_pixels = malloc(sizeof(uint32_t) * width * height);
   memcpy(original_pixels, pixels, sizeof(uint32_t) * width * height);
   SimpleImage original_image = init_image(width, height, original_pixels);
   
-  if (pixels == NULL) {
-    printf("[SEAM-CARVER] Error: couldn't load image");
-    return 1;
-  }
   
   printf("[SEAM-CARVER] Loaded image succesfully\n");
   printf("[SEAM-CARVER] width=%d, height=%d\n", width, height);
   printf("\n");
   
-  InitWindow(800, 600, "Seam carver");
   SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+  InitWindow(image.width, image.height, "Seam carver");
   SetTargetFPS(60);
-  int screen_width = 800;
+
+  Image raylib_image = (Image){
+    .data = original_image.pixels,
+    .width = original_image.width,
+    .height = original_image.height,
+    .mipmaps = 1,
+    .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8,
+  };
+  Texture2D texture = LoadTextureFromImage(raylib_image);
   while (!WindowShouldClose()) {
-    int new_screen_width = GetScreenWidth();
-    if (screen_width != new_screen_width) {
-      
-    }
-  }
+    int target_width = GetScreenWidth();
 
-  
+    if (original_image.width > target_width) {
+      // Calculating magnitude images
+      Magnitude lum = calculate_lum_image(original_image);
+      Magnitude grad = calculate_grad_image(lum);
+      Magnitude dp = calculate_dp_image(grad);
 
-  for (int i = 0; i < 350; ++i) { 
-    printf("Iteration: %d\n", i);
-    Magnitude lum = calculate_lum_image(original_image);
-    //    check_min_max("Luminance", lum, NULL, NULL);
-    //    if (dump_mag("lum.png", lum, image, 1.0)) return 1;
-  
-    Magnitude grad = calculate_grad_image(lum);
-    //    float max_grad;
-    //    check_min_max("Gradient", grad, NULL, &max_grad);
-    //    if (dump_mag("grad.png", grad, image, max_grad)) return 1;
+      // Removing seam
+      int seam = rand()%dp.width;
+      for (int y = dp.height-1; y >= 0; --y) {
+	memmove(&(original_image.pixels[y*dp.width + seam]), &(original_image.pixels[y*dp.width + seam+1]), sizeof(uint32_t) * ((dp.width * dp.height) - (y*dp.width + seam)));
+	//    original_image.pixels[y*width + seam] = 0xFF0000FF;
+	seam = ((seam-1) >= 0 && dp.pixels[y*dp.width + seam-1] < dp.pixels[y*dp.width + seam]) ? seam-1 : seam;
+	seam = ((seam+1) < dp.width && dp.pixels[y*dp.width + seam+1] < dp.pixels[y*dp.width + seam]) ? seam+1 : seam;
+      }
+      original_image.width -= 1;
+      texture.width -= 1;
 
-    Magnitude dp = calculate_dp_image(grad);
-    //    float max_dp;
-    //    check_min_max("Dynamic Programming", dp, NULL, &max_dp);
-    //    if (dump_mag("dp.png", dp, image, max_dp)) return 1;
-
-  
-    int seam = rand()%dp.width;
-    for (int y = dp.height-1; y >= 0; --y) {
-      memmove(&(original_image.pixels[y*dp.width + seam]), &(original_image.pixels[y*dp.width + seam+1]), sizeof(uint32_t) * ((dp.width * dp.height) - (y*dp.width + seam)));
-      //    original_image.pixels[y*width + seam] = 0xFF0000FF;
-      seam = ((seam-1) >= 0 && dp.pixels[y*dp.width + seam-1] < dp.pixels[y*dp.width + seam]) ? seam-1 : seam;
-      seam = ((seam+1) < dp.width && dp.pixels[y*dp.width + seam+1] < dp.pixels[y*dp.width + seam]) ? seam+1 : seam;
+      // Updating texture (UpdateTexture doesn't work, maybe different solution?)
+      UnloadTexture(texture);
+      raylib_image.data = original_image.pixels;
+      raylib_image.width -= 1;
+      texture = LoadTextureFromImage(raylib_image);
     }
 
-    original_image.width -= 1;
+    BeginDrawing();
+    DrawTexture(texture, 0, 0, WHITE);
+    EndDrawing();
   }
-  dump_image("output.png", original_image);
-  dump_image("dp_seam.png", image);
-  
+
+    CloseWindow();
   return 0;
 }
