@@ -1,4 +1,8 @@
 # Seam Carver
+
+> [!WARNING]
+> This repository needs cleaning up. The code and user experience urgent improvement.
+
 Seam carver is an outrageously cool algorithm for fluid resizing of images. In it's current state it only calculates the gradient magnitude and luminance image of the input image. The actual seam cutting is something I'll be working on in the coming days and weeks. 
 
 This repository contains -O3 compiled object files for quick testing purposes. It makes it really easy to recompile with -O3 enabled.
